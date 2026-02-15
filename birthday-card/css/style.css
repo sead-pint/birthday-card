@@ -1,0 +1,295 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    font-family: 'Ma Shan Zheng', cursive; 
+}
+
+#webgl-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1; /* 除了 UI 层，它在最下面 */
+    display: none; /* 初始隐藏，进入星空场景显示 */
+}
+
+/* UI 层级管理 */
+#ui-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none; /* 让鼠标事件穿透到 Canvas，除非点到按钮 */
+}
+
+.scene {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+.scene.active {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 启动遮罩 */
+#start-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #FF9A9E;
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.start-btn {
+    padding: 15px 40px;
+    background: white;
+    color: #FF9A9E;
+    border-radius: 30px;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    cursor: pointer;
+    font-family: 'ZCOOL KuaiLe', cursive;
+    animation: heartbeat 1.5s infinite;
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* 场景1：星空风格 */
+#scene-intro {
+    background: transparent;
+}
+
+/* 移除之前的模拟动态背景 */
+.sanrio-bg {
+    display: none;
+}
+
+.intro-content {
+    text-align: center;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.3); /* 深色半透明 */
+    backdrop-filter: blur(4px);
+    padding: 40px 60px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.main-title {
+    font-family: 'ZCOOL KuaiLe', cursive;
+    color: #ff9a9e; /* 粉色 */
+    font-size: 4rem; /* 稍微大一点 */
+    margin-bottom: 20px;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(255, 154, 158, 0.8); /* 粉色光晕 */
+}
+
+.sub-hint {
+    font-size: 1.5rem;
+    color: #ddd;
+    margin-top: 20px;
+    animation: fadeUp 2s infinite;
+}
+
+/* loading-hint removed */
+
+@keyframes fadeUp {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(-10px); opacity: 0.5; }
+}
+
+/* 场景2 & 3 UI */
+.particle-hint {
+    position: absolute;
+    bottom: 15%;
+    color: white;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px rgba(255,105,180,0.8);
+    pointer-events: none;
+    text-align: center;
+    width: 100%;
+}
+
+.blow-meter-container {
+    position: absolute;
+    bottom: 10%;
+    width: 80%;
+    left: 10%;
+    text-align: center;
+}
+
+.blow-icon {
+    color: white;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+}
+
+.meter-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.meter-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%);
+    transition: width 0.1s;
+}
+
+.final-card-container {
+    perspective: 1000px;
+    cursor: pointer;
+    z-index: 25;
+    /* 不要在这里设置 opacity为0，否则整个容易看不见，让内部信封自己控制 */
+}
+
+/* 确保场景也是最高层级可点击 */
+#scene-letter {
+    z-index: 20;
+}
+
+.card-pop-animation {
+    display: flex !important; /* 确保它是可见的flex布局 */
+    opacity: 1 !important;
+    animation: popOutRotate 3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes popOutRotate {
+    0% { 
+        transform: scale(0) rotateY(0deg) rotateX(45deg); 
+        opacity: 0; 
+    }
+    50% {
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(1) rotateY(1080deg) rotateX(0deg); /* 旋转3圈 */
+        opacity: 1; 
+    }
+}
+
+.card-envelope {
+    width: 300px;
+    height: 200px;
+    background: #ff5e78;
+    border-radius: 10px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 1s;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-front {
+    color: white;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.letter-content {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85%;
+    max-width: 500px;
+    height: 70vh;
+    background: #fffafa url('https://www.transparenttextures.com/patterns/cream-paper.png');
+    padding: 40px;
+    box-shadow: 0 0 30px rgba(255,255,255,0.5);
+    border-radius: 5px;
+    opacity: 0;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.letter-wishes {
+    font-size: 1.1rem;
+    color: #5d4037;
+    line-height: 1.8;
+}
+
+/* 简单的模糊特效类 */
+.blur-bg {
+    filter: blur(10px);
+}
+
+.photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #aaa;
+    font-size: 0.8rem;
+    overflow: hidden;
+}
+.photo-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wishes {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+/* 气球动画 */
+.balloon {
+    position: absolute;
+    width: 50px;
+    height: 70px;
+    background-color: #ff9a9e;
+    border-radius: 50%;
+    bottom: -100px;
+    animation: floatUp 6s linear forwards;
+    opacity: 0.8;
+}
+
+.balloon:before {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 24px;
+    width: 2px;
+    height: 20px;
+    background: #333;
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+    100% { transform: translateY(-100vh) rotate(20deg); opacity: 0; }
+}
